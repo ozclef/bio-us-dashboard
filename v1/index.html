@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bio‑US — Dashboard</title>
+  <meta name="description" content="Dashboard personal: menú hash, vistas previas, publicaciones y conectores (auth, chat)." />
+  <style>
+    /* --- Estilos básicos, moderno y limpio --- */
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#6ee7b7}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071023 0%,var(--bg) 100%);color:#e6eef6}
+    .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{padding:20px;border-right:1px solid rgba(255,255,255,0.03);}
+    .brand{font-weight:700;font-size:18px;margin-bottom:18px}
+    .menu a{display:block;padding:10px 12px;border-radius:8px;color:var(--muted);text-decoration:none;margin-bottom:6px}
+    .menu a.active, .menu a:hover{background:rgba(255,255,255,0.02);color:#fff}
+    .search{margin:12px 0}
+    input[type=search]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff}
+    .content{padding:28px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+    .section{display:none}
+    .preview{padding:12px;border-radius:10px;background:rgba(0,0,0,0.25);min-height:120px}
+    .posts-list{list-style:none;padding:0;margin:0}
+    .posts-list li{padding:8px;border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,0.01)}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#042024;text-decoration:none;font-weight:600}
+    .small{font-size:13px;color:var(--muted)}
+    .flex{display:flex;gap:10px;align-items:center}
+    footer{margin-top:22px;color:var(--muted);font-size:13px}
+    /* responsive */
+    @media(max-width:800px){.app{grid-template-columns:1fr}.sidebar{display:flex;gap:10px;overflow:auto;padding:12px}.content{padding:16px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">Bio‑US • Dashboard</div>
+    <div class="small">Control central — enlaces rápidos</div>
+    <div class="search"><input type="search" id="search" placeholder="Buscar proyectos, publicaciones..."/></div>
+    <nav class="menu" id="menu">
+      <a href="#home">Inicio</a>
+      <a href="#marketing">Marketing</a>
+      <a href="#etica">Ética</a>
+      <a href="#tecnofix">TecnoFix</a>
+      <a href="#docente">Docente</a>
+      <a href="#programacion">Programación</a>
+      <a href="#publicaciones">Publicaciones</a>
+      <a href="#chat">Chat (Realtime)</a>
+      <a href="#config">Config / Deploy</a>
+    </nav>
+    <footer>
+      <div class="small">Principal: <strong>bio-us.vercel.app</strong></div>
+      <div style="margin-top:8px"><a class="btn" id="open-main" href="https://bio-us.vercel.app" target="_blank">Abrir principal</a></div>
+    </footer>
+  </aside>
+
+  <main class="content">
+    <div class="header">
+      <h1 id="title">Inicio</h1>
+      <div class="flex">
+        <div id="user-status" class="small">No autenticado</div>
+        <a id="auth-btn" class="btn">Iniciar sesión</a>
+      </div>
+    </div>
+
+    <!-- Secciones -->
+    <section id="home" class="section">
+      <div class="cards">
+        <div class="card">
+          <h3>Resumen</h3>
+          <div class="small">Links rápidos, últimos posts y estado de despliegues.</div>
+          <div style="margin-top:10px" id="last-posts"></div>
+        </div>
+        <div class="card">
+          <h3>Deploys</h3>
+          <div class="small">Vercel: bio-us.vercel.app (principal)</div>
+          <div class="small" style="margin-top:8px">Netlify / Demo sites en /projects</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="marketing" class="section">
+      <h2>Marketing Digital</h2>
+      <div class="preview" id="marketing-preview">Vista previa de marketing</div>
+    </section>
+
+    <section id="etica" class="section">
+      <h2>Ética</h2>
+      <div class="preview" id="etica-preview">Textos y recursos de ética</div>
+    </section>
+
+    <section id="tecnofix" class="section">
+      <h2>TecnoFix</h2>
+      <div class="preview" id="tecnofix-preview">Soluciones, parches y demos</div>
+    </section>
+
+    <section id="docente" class="section">
+      <h2>Docente</h2>
+      <div class="preview" id="docente-preview">Materiales, código de ejemplo y guías</div>
+    </section>
+
+    <section id="programacion" class="section">
+      <h2>Programación</h2>
+      <div class="preview" id="programacion-preview">Proyectos y snippets</div>
+    </section>
+
+    <section id="publicaciones" class="section">
+      <h2>Publicaciones</h2>
+      <p class="small">Si publicas muchos posts, usa un manifest <code>posts.json</code> o un CMS ligero (Supabase, Netlify CMS).</p>
+      <ul id="posts" class="posts-list"></ul>
+    </section>
+
+    <section id="chat" class="section">
+      <h2>Chat Realtime (demo)</h2>
+      <div class="card">
+        <div id="chat-area" style="height:240px;overflow:auto;padding:8px;background:rgba(255,255,255,0.01);border-radius:8px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="chat-input" placeholder="Mensaje..." style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff" />
+          <button id="send-btn" class="btn">Enviar</button>
+        </div>
+      </div>
+      <p class="small">Este chat es un ejemplo. Para que guarde mensajes y funcione real, conecta Supabase o tu backend con websocket.</p>
+    </section>
+
+    <section id="config" class="section">
+      <h2>Configuración y Deploy</h2>
+      <div class="card">
+        <h3>Estructura recomendada (repo)</h3>
+        <pre class="small" style="white-space:pre-wrap;background:transparent;border:0;margin:0;padding:0">/
+  /index.html   ← este archivo (dashboard)
+  /projects/    ← demos y mini‑apps (cada una con su index)
+  /posts/       ← publicaciones (post1.html, post2.html) o usar posts.json
+  /assets/      ← imágenes, css, js global
+  /api/         ← funciones serverless (si usas Vercel/Netlify)
+</pre>
+        <h3>Deploy rápido</h3>
+        <ol class="small">
+          <li>GitHub + Vercel: conecta tu repo → auto deploy en cada push</li>
+          <li>Netlify: drag & drop de la carpeta `dist` o conectar repo</li>
+          <li>GitHub Pages: sirve static -> usa branch `gh-pages`</li>
+        </ol>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <h3>Autenticación y Chat (plantilla con Supabase)</h3>
+        <p class="small">Sigue estos pasos (resumen):</p>
+        <ol class="small">
+          <li>Crea proyecto en <code>supabase.com</code>, copia URL y PUBLIC_ANON_KEY</li>
+          <li>En la DB crea tabla <code>messages</code>: id, user_id, content, inserted_at</li>
+          <li>Usa el SDK de supabase en tu HTML (ejemplo abajo)</li>
+        </ol>
+
+        <pre class="small" style="white-space:pre-wrap;background:transparent;border:0">// Ejemplo minimal:
+// 1) Pegar antes de usar: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+// 2) Inicializar:
+// const supabase = supabaseCreateClient('https://xxx.supabase.co', 'PUBLIC_ANON_KEY')
+</pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// --- Navegación por hash y activado de menu ---
+const sections = document.querySelectorAll('.section');
+const menuLinks = document.querySelectorAll('#menu a');
+function showSection() {
+  const hash = window.location.hash || '#home';
+  const id = hash.replace('#','');
+  document.getElementById('title').innerText = id.charAt(0).toUpperCase() + id.slice(1);
+  sections.forEach(s => s.style.display = s.id === id ? 'block' : 'none');
+  menuLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href')===('#'+id)));
+}
+window.addEventListener('hashchange', showSection);
+window.addEventListener('load', () => {
+  showSection();
+  loadPostsPreview();
+  initChatDemo();
+});
+
+// --- BUSCADOR simple ---
+document.getElementById('search').addEventListener('input', (e)=>{
+  const q = e.target.value.toLowerCase();
+  menuLinks.forEach(a=>{ const text = a.innerText.toLowerCase(); a.style.display = text.includes(q) ? 'block' : 'none'; });
+});
+
+// --- CARGAR POSTS desde posts.json o carpeta (recomiendo posts.json manifest) ---
+async function loadPostsPreview(){
+  const container = document.getElementById('posts');
+  const last = document.getElementById('last-posts');
+  try{
+    // Opción A: si tienes posts.json en la raíz que lista los posts
+    const res = await fetch('/posts/posts.json');
+    if(!res.ok) throw new Error('no manifest');
+    const data = await res.json();
+    container.innerHTML = '';
+    data.posts.forEach(p=>{
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${p.title}</strong> <div class='small'>${p.date} — <a href='${p.url}'>Abrir</a></div>`;
+      container.appendChild(li);
+    });
+    // últimos 3
+    last.innerHTML = data.posts.slice(0,3).map(p=>`<div class='small'>${p.date} — <a href='${p.url}'>${p.title}</a></div>`).join('');
+  }catch(err){
+    // Opción B: si no hay manifest, mostrar nota
+    container.innerHTML = `<li class='small'>No se encontró <code>/posts/posts.json</code>. Crea un manifest JSON o usa un CMS (Supabase, Netlify CMS).</li>`;
+    last.innerHTML = `<div class='small'>No hay posts listados (usa posts/posts.json)</div>`;
+  }
+}
+
+// --- CHAT demo (local, solo UI). Reemplazar con Supabase o WebSocket para persistencia ---
+function initChatDemo(){
+  const area = document.getElementById('chat-area');
+  const input = document.getElementById('chat-input');
+  const send = document.getElementById('send-btn');
+  const messages = [];
+  function render(){
+    area.innerHTML = messages.map(m=>`<div style='padding:6px;border-bottom:1px solid rgba(255,255,255,0.02)'><strong>${escapeHtml(m.u)}</strong>: ${escapeHtml(m.t)}</div>`).join('');
+    area.scrollTop = area.scrollHeight;
+  }
+  send.addEventListener('click', ()=>{
+    const t = input.value.trim(); if(!t) return; messages.push({u:'Tú',t}); input.value=''; render();
+  });
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ send.click(); }});
+}
+
+function escapeHtml(s){return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'":"&#39;' }[c]));}
+
+// --- AUTH BUTTON (placeholder) ---
+const authBtn = document.getElementById('auth-btn');
+const userStatus = document.getElementById('user-status');
+let fakeAuth = false;
+authBtn.addEventListener('click', ()=>{
+  fakeAuth = !fakeAuth;
+  if(fakeAuth){ userStatus.innerText = 'Autenticado (demo)'; authBtn.innerText = 'Cerrar sesión'; } else { userStatus.innerText = 'No autenticado'; authBtn.innerText = 'Iniciar sesión'; }
+});
+
+</script>
+
+<!--
+  === INSTRUCCIONES RÁPIDAS (NO BORRES) ===
+  1) Para publicar muchos posts: crea /posts/posts.json con formato:
+     { "posts": [ { "title": "Mi post", "date": "2025-11-21", "url": "/posts/post1.html" }, ... ] }
+  2) Deploy:
+     - Netlify: arrastra la carpeta que contiene index.html (o conecta repo)
+     - Vercel: conecta tu repo y configura root
+     - GitHub Pages: empuja a branch gh-pages o usa action
+  3) Chat/Realtime + Auth (recomendado: Supabase):
+     - Crea proyecto en supabase.com
+     - Instala tabla `messages` (id serial, user_id uuid, content text, inserted_at timestamptz default now())
+     - Usa el SDK: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+     - Ejemplo mínimo para enviar y escuchar mensajes en realtime (pegar en script y reemplazar URL/KEY):
+
+     <script>
+       // const SUPA_URL = 'https://xxx.supabase.co';
+       // const SUPA_KEY = 'public-anon-key';
+       // const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+       // // Insertar:
+       // await supabase.from('messages').insert({ user_id: user.id, content: 'hola desde el dashboard' });
+       // // Escuchar realtime (realtime debe estar activo en tu proyecto):
+       // const subscription = supabase.channel('public:messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => { console.log(payload); }).subscribe();
+     </script>
+
+  4) Estructura recomendada para chat + auth:
+     - /api/login.js (serverless) -> enlaza con Supabase o tu auth provider
+     - /api/messages -> endpoints para leer/escribir
+     - /projects/* -> demos small apps
+
+  5) Si quieres, puedo añadir ahora:
+     - Un ejemplo real de integración con Supabase (JS + listener)
+     - Una función serverless para proteger endpoints (Vercel/Netlify)
+     - Un ejemplo de deploy paso a paso para convertir bio-us.vercel.app en el root
+
+-->
+
+</body>
+</html>
